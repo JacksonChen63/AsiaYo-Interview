@@ -1,0 +1,7 @@
+# 本地 Terraform 狀態文件
+
+# .terraform 工作目錄
+.terraform
+
+# Terraform plan files
+*-plan

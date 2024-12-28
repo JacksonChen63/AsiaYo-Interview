@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asiayo
+  namespace: asiayo
+  labels:
+    app: asiayo
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: asiayo
+  revisionHistoryLimit: 1
+  template:
+    metadata:
+      labels:
+        app: asiayo
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 3000
+        fsGroup: 2000
+        supplementalGroups: [4000]
+      terminationGracePeriodSeconds: 120
+      imagePullSecrets:
+        - name: asiayo-registry-secret
+      containers:
+        - name: asiayo
+          imagePullPolicy: Always
+          image: xxxxxxxxxxxx.dkr.ecr.ap-southeast-1.amazonaws.com/asiayo:v1.0.0
+          ports:
+            - name: http
+              containerPort: 1228
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1024Mi
+            limits:
+              cpu: 1000m
+              memory: 2048Mi
+              ephemeral-storage: "128Mi"
+          volumeMounts:
+            - name: asiayo-volume
+              mountPath: /home/asiayo/path
+      volumes:
+        - name: asiayo-volume
+          persistentVolumeClaim:
+            claimName: asiayo-pvc
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "dedicated"
+                    operator: In
+                    values:
+                      - "api"
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: api
+              topologyKey: "topology.kubernetes.io/zone"
+      tolerations:
+        - effect: NoSchedule
+          key: dedicated
+          operator: Equal
+          value: api

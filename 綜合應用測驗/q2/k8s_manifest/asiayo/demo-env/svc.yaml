@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: asiayo
+  namespace: asiayo
+spec:
+  selector:
+    app: asiayo
+  ports:
+    - port: 1228
+      targetPort: 1228
+      name: http
